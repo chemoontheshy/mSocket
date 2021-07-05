@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\src\mSocket\main.cpp" />
+    <ClCompile Include="..\..\src\mSocket\tcp_client.cpp" />
+    <ClCompile Include="..\..\src\mSocket\tcp_server.cpp" />
+    <ClCompile Include="..\..\src\mSocket\udp_server.cpp" />
+    <ClCompile Include="..\..\src\mSocket\rtsp_server.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\mSocket\tcp_client.h" />
+    <ClInclude Include="..\..\src\mSocket\tcp_server.h" />
+    <ClInclude Include="..\..\src\mSocket\udp_server.h" />
+    <ClInclude Include="..\..\src\mSocket\rtsp_server.h" />
+  </ItemGroup>
+</Project>
