@@ -10,8 +10,9 @@
 //RTSP
 constexpr uint16_t SERVER_RTSP_PORT = 8554;
 //RTP
-constexpr uint16_t SERVER_RTP_PORT = 4001;
+constexpr uint16_t SERVER_RTP_PORT = 4002;
 constexpr uint16_t SERVER_RTCP_PORT = SERVER_RTP_PORT + 1;
+constexpr size_t maxBufferSize = (1 << 21);
 /// <summary>
 /// TCP客服端封装
 /// </summary>
@@ -62,6 +63,8 @@ private:
 	static void free();
 
 private:
+	SOCKET servRtspSockfd;
+	SOCKET servRtpSockfd;
 	int cliRtpPort{ -1 }, cliRtcpPort{ -1 };
 	//reply
 	//OPTIONS
@@ -69,27 +72,29 @@ private:
 	{
 		snprintf(buffer, bufferLen, "RTSP/1.0 200 OK\r\nCseq: %d\r\nPubilic: OPTIONS, DESCRIBE, SEPUT, PLAY\r\n\r\n", cseq);
 	}
-	static void replayCmd_SETUP(char* buffer, const int bufferLen, const int cseq, const int clientRTP_Port, const int ssrcNum, const char* sessionID, const int timeout)
-	{
-		snprintf(buffer, bufferLen, "RTSP/1.0 200 OK\r\nCseq: %d\r\nTransport: RTP/AVP;unicast;client_port=%d-%d;server_port=%d-%d;ssrc=%d;mode=play\r\nSession: %s; timeout=%d\r\n\r\n",
-			cseq, clientRTP_Port, clientRTP_Port + 1, SERVER_RTP_PORT, SERVER_RTCP_PORT, ssrcNum, sessionID, timeout);
-	}
-	static void replayCmd_PLAY(char* buffer, const int bufferLen, const int cseq, const char* sessionID, const int timeout)
-	{
-
-	}
 	static void replyCmd_DESCRBE(char* buffer, const int bufferLen, const int cseq, const char* url)
 	{
 		char ip[100]{ 0 };
 		char sdp[500]{ 0 };
 		sscanf_s(url, "rtsp://%[^:]:", ip, 100);
-		snprintf(sdp, sizeof(sdp), "v=0\r\no=- %lld 1 IN IP4 %s\r\nt=0 0\r\na=control:*\r\nm=video 0 RTP/AVP 96\r\na=rtpmap:96 H264/90000\r\na=control:track0\r\n", time(nullptr), ip);
+		snprintf(sdp, sizeof(sdp), "v=0\r\no=ivisionic %lld %lld 1 IN IP4 %s\r\ns=/xxx666\r\nt=0 0\r\na=control:*\r\nm=video 0 RTP/AVP 96\r\na=rtpmap:96 H264/90000\r\na=control:track0\r\n", time(nullptr), time(nullptr)+1, ip);
 		snprintf(buffer, bufferLen, "RTSP/1.0 200 OK\r\nCseq: %d\r\nContent-Base: %s\r\nContent-type: application/sdp\r\nContent-length: %lld\r\n\r\n%s", cseq, url, sizeof(sdp), sdp);
 	}
+	static void replayCmd_SETUP(char* buffer, const int bufferLen, const int cseq, const int clientRTP_Port, const int ssrcNum, const char* sessionID, const int timeout)
+	{
+		snprintf(buffer, bufferLen, "RTSP/1.0 200 OK\r\nCseq: %d\r\nTransport: RTP/AVP;unicast;client_port=%d-%d;server_port=%d-%d;ssrc=%d;mode=play\r\nSession: %s; timeout=%d\r\n\r\n",
+			cseq, clientRTP_Port, clientRTP_Port + 1, SERVER_RTP_PORT, SERVER_RTCP_PORT, ssrcNum, sessionID, timeout);
+	}
+	static void replyCmd_PLAY(char* buffer, const int bufferLen, const int cseq, const char* sessionID, const int timeout)
+	{
+		snprintf(buffer, bufferLen, "RTSP/1.0 200 OK\r\nCseq: %d\r\nRange: npt=0.000-\r\nSession: %s; timeout=%d\r\n\r\n", cseq, sessionID, timeout);
+
+	}
+
 	
 	//指把某种格式的文本（字符串）转换成某种数据结构的过程
 	static char* lineParser(char* src, char* line);
 
-
+	void serveClient(SOCKET clientfd, const sockaddr_in& cliAddr, SOCKET rtpFD, int ssrcNum, const char* sessionID, int timeout, float fps);
 };
 #endif

@@ -20,9 +20,11 @@ SUDP::~SUDP()
 void SUDP::start()
 {
 	auto udp_sock = Socket(AF_INET, SOCK_DGRAM);
-	if (!Bind(udp_sock, "127.0.0.1", 4002)) {
+	if (!Bind(udp_sock, "127.0.0.1", 8002)) {
 		return;
 	}
+	return;
+	auto send_sock = Socket(AF_INET, SOCK_DGRAM);
 	char buf[1024];
 	sockaddr_in client;
 	socklen_t client_len = sizeof(client);
@@ -39,6 +41,7 @@ void SUDP::start()
 		else {
 			num++;
 			printf("get# %d\n", num);
+			
 		}
 	}
 }

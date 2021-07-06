@@ -9,6 +9,11 @@ int main(int argc, char* argv[])
 	tcpSerVer.start();*/
 	/*CTCP tcpClient;
 	tcpClient.start();*/
+	//UDP
+	//SUDP udpserver;
+	//udpserver.start();
+
+	//RTSP
 	RTSP rtspServer;
 	rtspServer.start();
 }
