@@ -144,6 +144,7 @@ void RTSP::serveClient(SOCKET clientfd, const sockaddr_in& cliAddr, SOCKET rtpFD
 			inet_pton(udp_client.sin_family, IPv4, &udp_client.sin_addr);
 			udp_client.sin_port = htons(this->cliRtpPort);
 			int udp_client_len = sizeof(udp_client);
+			unsigned char *testBuf;
 			while (1) {
 				
 				//printf("waiting...\n");
@@ -158,6 +159,7 @@ void RTSP::serveClient(SOCKET clientfd, const sockaddr_in& cliAddr, SOCKET rtpFD
 					//num++;
 					printf("get# %lld\n", _size);
 					//printf(b);
+					std::cout << udp_client.sin_port << std::endl;
 					auto sentBytes =  sendto(udp_sockfd,buf, sizeof(buf),0, reinterpret_cast<sockaddr*>(&udp_client), udp_client_len);
 					std::cout << "sentBytes:" << sentBytes << std::endl;
 					memset(buf, 0, 1024);
