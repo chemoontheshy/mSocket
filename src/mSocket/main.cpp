@@ -10,10 +10,10 @@ int main(int argc, char* argv[])
 	/*CTCP tcpClient;
 	tcpClient.start();*/
 	//UDP
-	//SUDP udpserver;
-	//udpserver.start();
+	SUDP udpserver;
+	udpserver.start();
 
 	//RTSP
-	RTSP rtspServer;
-	rtspServer.start();
+	//RTSP rtspServer;
+	//rtspServer.start();
 }

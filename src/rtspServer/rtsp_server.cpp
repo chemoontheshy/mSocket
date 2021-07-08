@@ -21,14 +21,43 @@ RTSP::~RTSP()
 
 void RTSP::start(uint16_t clientRtpPort)
 {
-	
+	auto serverSockfd = creatTcpSocket();
+	if (!RTSP::sockInit(serverSockfd, "0.0.0.0", SERVER_PORT))
+	{
+		printf("failed to create server socket.");
+		return;
+	}
+	//Ω” ’¬Î¡˜
+	auto clientRtpSockfd = creatUdpSocket();
+	if (!bindSocket(clientRtpSockfd, "0.0.0.0", clientRtpPort))
+	{
+		printf("failed to create clientRtp socket.");
+		return;
+	}
+	//rtpSocket
+	auto serverRtpSockfd = creatUdpSocket();
+	if (!bindSocket(serverRtpSockfd, "0.0.0.0", SERVER_RTP_PORT))
+	{
+		printf("failed to create serverRtpSockfd socket.");
+		return;
+	}
+	//rtcpSocket
+	auto serverRtcpSockfd = creatUdpSocket();
+	if (!bindSocket(serverRtcpSockfd, "0.0.0.0", SERVER_RTP_PORT))
+	{
+		printf("failed to create serverRtcpSockfd socket.");
+		return;
+	}
+	printf("rtsp:://127.0.0.1:%d\n", SERVER_PORT);
+
+	printf("end");
 }
 
 
 
 SOCKET RTSP::creatTcpSocket()
 {
-	SOCKET sock = socket(AF_INET,SOCK_STREAM, 0);
+	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (sock == INVALID_SOCKET)
 	{
 		printf("TCP::Socket() failed.\n");
@@ -52,7 +81,7 @@ bool RTSP::bindSocket(SOCKET sock, const char* ip, uint16_t port)
 	sockaddr_in addr;
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
-	addr.sin_addr.S_un.S_addr = INADDR_ANY;
+	inet_pton(AF_INET, "127.0.0.1", &sockAddr.sin_addr.s_addr);
 	if (bind(sock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == SOCKET_ERROR) {
 		printf("TCP::bind() failed.\n");
 		return false;

@@ -11,8 +11,8 @@
 #include <time.h>
 
 #define SERVER_PORT     8554
-#define SERVER_RTP_PORT  4002
-#define SERVER_RTCP_PORT 4003
+#define SERVER_RTP_PORT  85552
+#define SERVER_RTCP_PORT 85553
 #define BUF_MAX_SIZE    (1024*1024)
 
 static int createTcpSocket()
@@ -167,7 +167,7 @@ static void doClient(int clientSockfd, const char* clientIP, int clientPort,
     char url[100];
     char version[40];
     int cseq;
-    int clientRtpPort, clientRtcpPort;
+    int clientRtpPort{ -1 }, clientRtcpPort{-1};
     char* bufPtr;
     char* rBuf = (char*)malloc(BUF_MAX_SIZE);
     char* sBuf = (char*)malloc(BUF_MAX_SIZE);
@@ -256,6 +256,46 @@ static void doClient(int clientSockfd, const char* clientIP, int clientPort,
         printf("---------------S->C--------------\n");
         printf("%s", sBuf);
         send(clientSockfd, sBuf, strlen(sBuf), 0);
+        //return;
+        if (!strcmp(method, "PLAY"))
+        {
+            auto udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
+            sockaddr_in addr;
+            addr.sin_family = AF_INET;
+            addr.sin_port = htons(4002);
+            addr.sin_addr.S_un.S_addr = INADDR_ANY;
+            if (bind(udp_sock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == SOCKET_ERROR) {
+                printf("TCP::bind() failed.\n");
+                return;
+            }
+            int num = 0;
+            char buf[1024] = { 0 };
+            sockaddr_in client;
+            socklen_t client_len = sizeof(client);
+            //send 
+            auto send_sock = socket(AF_INET, SOCK_DGRAM, 0);
+            sockaddr_in sin;
+            sin.sin_family = AF_INET;
+            sin.sin_port = htons(clientRtpPort);
+            sin.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+            int len = sizeof(sin);
+            char* rBuf = (char*)malloc(1024 * 1024);
+            while (1) {
+                //printf("waiting...\n");
+                auto _size = recvfrom(udp_sock, buf, 1024, 0, reinterpret_cast<sockaddr*>(&client), &client_len);
+                if (_size < 0) {
+                    perror("recvfrom");
+                }
+                else if (_size == 0) {
+                    printf("client shutdown...\n");
+                }
+                else {
+                    auto cout = sendto(send_sock, buf, _size, 0, (sockaddr*)&sin, len);
+                    printf("get# %d\n", cout);
+                    memset(buf, 0, 1024);
+                }
+            }
+        }
     }
 out:
     closesocket(clientSockfd);

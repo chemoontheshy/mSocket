@@ -10,7 +10,7 @@
 /// <summary>
 /// 指定RTSP地址的端口
 /// </summary>
-constexpr uint16_t SERVER_RTSP_PORT = 8554;
+constexpr uint16_t SERVER_PORT = 8554;
 
 /// <summary>
 /// 接收摄像头（编码板）发送过来的码流的指定端口
@@ -105,3 +105,4 @@ private:
 	static char* lineParser(char* src, char* line);
 };
 #endif
+
