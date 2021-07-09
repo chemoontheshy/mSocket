@@ -70,6 +70,7 @@ SOCKET STCP::Socket(int af, int type, int protocol)
 bool STCP::Bind(SOCKET sock, const char* ip, uint16_t port)
 {
 	sockaddr_in addr;
+
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
 	addr.sin_addr.S_un.S_addr = INADDR_ANY;
