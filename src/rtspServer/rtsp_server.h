@@ -146,7 +146,7 @@ private:
 	/// <param name="clientRTP_Port">客户端提供的RTP入口</param>
 	/// <param name="ssrcNum">同步信源标识符：用于标识同步信源</param>
 	/// <param name="sessionID">标识会话ID（可以自定义）</param>
-	/// <param name="timeout"></param>
+	/// <param name="timeout">超时时间</param>
 	static void replayCmd_SETUP(char* buffer, const int bufferLen, const int cseq, const int clientRTP_Port, const int ssrcNum, const char* sessionID, const int timeout)
 	{
 		snprintf(buffer, bufferLen, "RTSP/1.0 200 OK\r\nCseq: %d\r\nTransport: RTP/AVP;unicast;client_port=%d-%d;server_port=%d-%d;ssrc=%d;mode=play\r\nSession: %s; timeout=%d\r\n\r\n",
