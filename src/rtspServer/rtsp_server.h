@@ -6,6 +6,7 @@
 #include <winsock2.h>
 #include <WS2tcpip.h>
 #include <string.h>
+#include <thread>
 
 /// <summary>
 /// 指定RTSP地址的端口
@@ -184,6 +185,9 @@ private:
 	/// <param name="line">一行的缓冲区</param>
 	/// <returns></returns>
 	static char* lineParser(char* src, char* line);
+
+	static void thread_do(SOCKET clientRtpSockfd, SOCKET serverRtpSockfd, const int serverRtpPort);
+
 };
 #endif
 

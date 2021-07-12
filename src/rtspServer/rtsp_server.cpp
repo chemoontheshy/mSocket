@@ -48,7 +48,7 @@ void RTSP::start(uint16_t clientRtpPort)
 		printf("failed to create serverRtcpSockfd socket.");
 		return;
 	}
-	printf("rtsp:://127.0.0.1:%d\n", SERVER_PORT);
+	printf("rtsp://127.0.0.1:%d\n", SERVER_PORT);
 	while (true)
 	{
 		//接收初始
@@ -124,15 +124,14 @@ void RTSP::serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serve
 	char url[100]{ 0 };
 	char version[10]{ 0 };
 	int cseq;
-	int clientRtpPort = -1;
-	int clientRtcpPort = -1;
+	int serverRtpPort = -1;
+	int serverRtcpPort = -1;
 	char* bufPtr;
 	char* rBuf = (char*)malloc(MAX_SIZE);
 	char* sBuf = (char*)malloc(MAX_SIZE);
 	if (rBuf == nullptr || sBuf == nullptr)
 		return;
 	char line[400];
-
 	while (true)
 	{
 		int recvLen = -1;
@@ -167,7 +166,7 @@ void RTSP::serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serve
 				bufPtr = lineParser(bufPtr, line);
 				if (!strncmp(line, "Transport:", strlen("Transport:")))
 				{
-					sscanf_s(line, "Transport: RTP/AVP;unicast;client_port=%d-%d\r\n", &clientRtpPort,&clientRtcpPort);
+					sscanf_s(line, "Transport: RTP/AVP;unicast;client_port=%d-%d\r\n", &serverRtpPort,&serverRtcpPort);
 					break;
 				}
 			}
@@ -177,7 +176,7 @@ void RTSP::serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serve
 		else if (!strcmp(method, "DESCRIBE"))
 			RTSP::replyCmd_DESCRBE(sBuf, MAX_SIZE, cseq, url);
 		else if (!strcmp(method, "SETUP"))
-			RTSP::replayCmd_SETUP(sBuf, MAX_SIZE, cseq, clientRtpPort, 19950715, "ivisionic", 60);
+			RTSP::replayCmd_SETUP(sBuf, MAX_SIZE, cseq, serverRtpPort, 19950715, "ivisionic", 60);
 		else if (!strcmp(method, "PLAY"))
 			RTSP::replyCmd_PLAY(sBuf, MAX_SIZE, cseq, "ivisionic", 60);
 		else
@@ -195,35 +194,8 @@ void RTSP::serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serve
 		}
 		if (!strcmp(method, "PLAY"))
 		{
-			int num = 0;
-			char buf[1024] = { 0 };
-			//接受rtp
-			sockaddr_in rtp_client;
-			socklen_t rtp_client_len = sizeof(rtp_client);
-			//send
-			sockaddr_in sin;
-			sin.sin_family = AF_INET;
-			sin.sin_port = htons(clientRtpPort);
-			//sin.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
-			//新函数
-			inet_pton(AF_INET, "127.0.0.1", &sin.sin_addr);
-			int len = sizeof(sin);
-			while (1) {
-				//printf("waiting...\n");
-				auto _size = recvfrom(clientRtpSockfd, buf, 1024, 0, reinterpret_cast<sockaddr*>(&rtp_client), &rtp_client_len);
-				if (_size < 0) {
-					perror("recvfrom");
-				}
-				else if (_size == 0) {
-					printf("client shutdown...\n");
-				}
-				else {
-					//num++;
-					auto cout = sendto(serverRtcpSockfd, buf, _size, 0, reinterpret_cast<sockaddr*>(&sin), len);
-					//printf("get# %d\n", cout);
-					memset(buf, 0, 1024);
-				}
-			}
+			std::thread t1(thread_do,clientRtpSockfd,serverRtpSockfd,serverRtpPort);
+			t1.detach();
 		}
 	}
 	closesocket(serverSockfd);
@@ -247,4 +219,39 @@ char* RTSP::lineParser(char* src, char* line)
 	*line = '\n';
 	*(++line) = 0;
 	return (src + 1);
+}
+
+void RTSP::thread_do(SOCKET clientRtpSockfd, SOCKET serverRtpSockfd,const int serverRtpPort)
+{
+	int num = 0;
+	int rtcp_num = 0;
+	char buf[1024] = { 0 };
+	char mbuf[1024] = { 0 };
+	//接受rtp
+	sockaddr_in rtp_client;
+	socklen_t rtp_client_len = sizeof(rtp_client);
+	//send
+	sockaddr_in sin;
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(serverRtpPort);
+	//sin.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+	//新函数
+	inet_pton(AF_INET, "127.0.0.1", &sin.sin_addr);
+	int len = sizeof(sin);
+	while (1) {
+		//printf("waiting...\n");
+		auto _size = recvfrom(clientRtpSockfd, buf, 1024, 0, reinterpret_cast<sockaddr*>(&rtp_client), &rtp_client_len);
+		if (_size < 0) {
+			//perror("recvfrom");
+		}
+		else if (_size == 0) {
+			printf("client shutdown...\n");
+		}
+		else {
+			//num++;
+			auto cout = sendto(serverRtpSockfd, buf, _size, 0, reinterpret_cast<sockaddr*>(&sin), len);
+			//printf("get# %d\n", cout);
+			memset(buf, 0, 1024);
+		}
+	}
 }
