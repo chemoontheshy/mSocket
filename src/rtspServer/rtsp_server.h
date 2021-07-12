@@ -103,7 +103,6 @@ private:
 			"Public: OPTIONS, DESCRIBE, SETUP, PLAY\r\n"
 			"\r\n",
 			cseq);
-		printf(buffer);
 	}
 
 	/// <summary>
