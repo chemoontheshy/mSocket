@@ -158,11 +158,21 @@ bool RTSP::serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serve
 		}
 
 		/* Ω‚Œˆ–Ú¡–∫≈ */
-		bufPtr = lineParser(bufPtr, line);
+		/*bufPtr = lineParser(bufPtr, line);
 		if (sscanf_s(line, "CSeq: %d\r\n", &cseq) != 1)
 		{
+			std::cout << sscanf_s(line, "CSeq: %d\r\n", &cseq) << std::endl;
 			fprintf(stdout, "RTSP::lineParser() parse seq error\n");
 			break;
+		}*/
+		while (true)
+		{
+			bufPtr = lineParser(bufPtr, line);
+			if (!strncmp(line, "CSeq:", strlen("CSeq:")))
+			{
+				sscanf_s(line, "CSeq: %d\r\n", &cseq);
+				break;
+			}
 		}
 		if (!strcmp(method, "SETUP"))
 		{
