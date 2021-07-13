@@ -100,7 +100,7 @@ private:
 		printf("bufferLen%d\n",bufferLen);
 		snprintf(buffer, bufferLen, "RTSP/1.0 200 OK\r\n"
 			"CSeq: %d\r\n"
-			"Public: OPTIONS, DESCRIBE, SETUP, PLAY\r\n"
+			"Public: OPTIONS, DESCRIBE, SETUP, PLAY,TEARDOWN \r\n"
 			"\r\n",
 			cseq);
 	}
@@ -168,13 +168,24 @@ private:
 	}
 
 	/// <summary>
+	/// 回复TEARDOWN请求
+	/// </summary>
+	/// <param name="buffer">保存待传输数据的缓冲区地址的头指针</param>
+	/// <param name="bufferLen">可接收的最大字节数（不能超过buf缓冲区的大小）</param>
+	/// <param name="cseq">本次请求的序列号</param>
+	static void replyCmd_TEARDOWN(char* buffer, const int bufferLen, const int cseq)
+	{
+		snprintf(buffer, bufferLen, "RTSP/1.0 200 OK\r\nCseq: %d\r\n\r\n", cseq);
+	}
+
+	/// <summary>
 	/// RTSP会话
 	/// </summary>
 	/// <param name="serverSockfd">TCP会话</param>
 	/// <param name="clientRtpSockfd">用于接收摄像头码流的通道(UDP包)</param>
 	/// <param name="serverRtpSockfd">用于传输RTP的通道</param>
 	/// <param name="serverRtcpSockfd">用于传输RTCP的通道</param>
-	static void serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serverRtpSockfd,
+	static bool serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serverRtpSockfd,
 		SOCKET serverRtcpSockfd);
 	
 	/// <summary>
@@ -185,6 +196,12 @@ private:
 	/// <returns></returns>
 	static char* lineParser(char* src, char* line);
 
+	/// <summary>
+	/// 转发UDP包
+	/// </summary>
+	/// <param name="clientRtpSockfd">用于接收摄像头码流的通道(UDP包)</param>
+	/// <param name="serverRtpSockfd">用于传输RTP的通道</param>
+	/// <param name="serverRtcpSockfd">用于传输RTCP的通道</param>
 	static void thread_do(SOCKET clientRtpSockfd, SOCKET serverRtpSockfd, const int serverRtpPort);
 
 };

@@ -61,7 +61,9 @@ void RTSP::start(uint16_t clientRtpPort)
 			break;
 		}
 		printf("accept client;client ip:%ld,client port:%ld\n", cliAddr.sin_addr.S_un.S_addr, cliAddr.sin_port);
-		serveClient(clientSockfd, clientRtpSockfd, serverRtpSockfd, serverRtcpSockfd);
+		auto endTCP = serveClient(clientSockfd, clientRtpSockfd, serverRtpSockfd, serverRtcpSockfd);
+		if (!endTCP)
+			break;
 	}
 
 	printf("end");
@@ -116,7 +118,7 @@ bool RTSP::sockInit(SOCKET sock, const char* ip, uint16_t port, int ListenQueue)
 	return true;
 }
 
-void RTSP::serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serverRtpSockfd,
+bool RTSP::serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serverRtpSockfd,
 	SOCKET serverRtcpSockfd)
 {
 	printf("test\n");
@@ -130,7 +132,7 @@ void RTSP::serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serve
 	char* rBuf = (char*)malloc(MAX_SIZE);
 	char* sBuf = (char*)malloc(MAX_SIZE);
 	if (rBuf == nullptr || sBuf == nullptr)
-		return;
+		return false;
 	char line[400];
 	while (true)
 	{
@@ -179,6 +181,8 @@ void RTSP::serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serve
 			RTSP::replayCmd_SETUP(sBuf, MAX_SIZE, cseq, serverRtpPort, 19950715, "ivisionic", 60);
 		else if (!strcmp(method, "PLAY"))
 			RTSP::replyCmd_PLAY(sBuf, MAX_SIZE, cseq, "ivisionic", 60);
+		else if (!strcmp(method, "TEARDOWN"))
+			RTSP::replyCmd_TEARDOWN(sBuf, MAX_SIZE, cseq);
 		else
 		{
 			fprintf(stderr, "Parse method error\n");
@@ -197,11 +201,14 @@ void RTSP::serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serve
 			std::thread t1(thread_do,clientRtpSockfd,serverRtpSockfd,serverRtpPort);
 			t1.detach();
 		}
+		if (!strcmp(method, "TEARDOWN"))
+			break;
 	}
 	closesocket(serverSockfd);
 	closesocket(clientRtpSockfd);
 	closesocket(serverRtcpSockfd);
 	closesocket(serverRtcpSockfd);
+	return false;
 }
 
 void RTSP::sockFree()
