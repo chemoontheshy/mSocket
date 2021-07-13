@@ -60,8 +60,11 @@ void RTSP::start(uint16_t clientRtpPort)
 			printf("failed to accept client\n");
 			break;
 		}
-		printf("accept client;client ip:%ld,client port:%ld\n", cliAddr.sin_addr.S_un.S_addr, cliAddr.sin_port);
-		auto endTCP = serveClient(clientSockfd, clientRtpSockfd, serverRtpSockfd, serverRtcpSockfd);
+		char IPv4[16]{ 0 };
+		//printf("accept client;client ip:%ld,client port:%ld\n", cliAddr.sin_addr.S_un.S_addr, cliAddr.sin_port);
+		auto ip_S_adrr = cliAddr.sin_addr.S_un.S_addr;
+		printf("Connection from %s:%d\n", inet_ntop(AF_INET, &cliAddr.sin_addr, IPv4, sizeof(IPv4)),ntohs(cliAddr.sin_port));
+		auto endTCP = serveClient(clientSockfd, clientRtpSockfd, serverRtpSockfd, serverRtcpSockfd, ip_S_adrr);
 		if (!endTCP)
 			break;
 	}
@@ -119,7 +122,7 @@ bool RTSP::sockInit(SOCKET sock, const char* ip, uint16_t port, int ListenQueue)
 }
 
 bool RTSP::serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serverRtpSockfd,
-	SOCKET serverRtcpSockfd)
+	SOCKET serverRtcpSockfd,ULONG ip_S_adrr)
 {
 	printf("test\n");
 	char method[10]{0};
@@ -198,7 +201,7 @@ bool RTSP::serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serve
 		}
 		if (!strcmp(method, "PLAY"))
 		{
-			std::thread t1(thread_do,clientRtpSockfd,serverRtpSockfd,serverRtpPort);
+			std::thread t1(thread_do,clientRtpSockfd,serverRtpSockfd,ip_S_adrr,serverRtpPort);
 			t1.detach();
 		}
 		if (!strcmp(method, "TEARDOWN"))
@@ -228,7 +231,7 @@ char* RTSP::lineParser(char* src, char* line)
 	return (src + 1);
 }
 
-void RTSP::thread_do(SOCKET clientRtpSockfd, SOCKET serverRtpSockfd,const int serverRtpPort)
+void RTSP::thread_do(SOCKET clientRtpSockfd, SOCKET serverRtpSockfd,ULONG ip_S_adrr,const int serverRtpPort)
 {
 	int num = 0;
 	int rtcp_num = 0;
@@ -243,7 +246,8 @@ void RTSP::thread_do(SOCKET clientRtpSockfd, SOCKET serverRtpSockfd,const int se
 	sin.sin_port = htons(serverRtpPort);
 	//sin.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
 	//ÐÂº¯Êý
-	inet_pton(AF_INET, "127.0.0.1", &sin.sin_addr);
+	//inet_pton(AF_INET, "127.0.0.1", &sin.sin_addr);
+	sin.sin_addr.S_un.S_addr = ip_S_adrr;
 	int len = sizeof(sin);
 	while (1) {
 		//printf("waiting...\n");

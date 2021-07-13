@@ -119,6 +119,7 @@ private:
 		sscanf_s(url, "rtsp://%[^:]:", ip, 100);
 		snprintf(sdp, sizeof(sdp), "v=0\r\n"
 			"o=- 9%lld 1 IN IP4 %s\r\n"
+			"s=ivisionicRTSP\r\n"
 			"t=0 0\r\n"
 			"a=control:*\r\n"
 			"m=video 0 RTP/AVP 96\r\n"
@@ -186,7 +187,7 @@ private:
 	/// <param name="serverRtpSockfd">用于传输RTP的通道</param>
 	/// <param name="serverRtcpSockfd">用于传输RTCP的通道</param>
 	static bool serveClient(SOCKET serverSockfd, SOCKET clientRtpSockfd, SOCKET serverRtpSockfd,
-		SOCKET serverRtcpSockfd);
+		SOCKET serverRtcpSockfd,ULONG ip_S_adrr);
 	
 	/// <summary>
 	/// 指把某种格式的文本（字符串）转换成某种数据结构的过程
@@ -202,7 +203,7 @@ private:
 	/// <param name="clientRtpSockfd">用于接收摄像头码流的通道(UDP包)</param>
 	/// <param name="serverRtpSockfd">用于传输RTP的通道</param>
 	/// <param name="serverRtcpSockfd">用于传输RTCP的通道</param>
-	static void thread_do(SOCKET clientRtpSockfd, SOCKET serverRtpSockfd, const int serverRtpPort);
+	static void thread_do(SOCKET clientRtpSockfd, SOCKET serverRtpSockfd,ULONG ip_S_adrr, const int serverRtpPort);
 
 };
 #endif
