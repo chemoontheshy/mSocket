@@ -21,9 +21,11 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\readtimeBandwith\main.cpp" />
     <ClCompile Include="..\..\src\readtimeBandwith\sender.cpp" />
+    <ClCompile Include="..\..\src\readtimeBandwith\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\readtimeBandwith\sender.h" />
+    <ClInclude Include="..\..\src\readtimeBandwith\utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

@@ -7,7 +7,9 @@
 #include <WS2tcpip.h>
 #include <string.h>
 #include <thread>
-
+#include <chrono>
+using namespace std;
+using namespace chrono;
 
 /// <summary>
 /// 指定UDP发送的端口

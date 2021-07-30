@@ -46,7 +46,7 @@ void Sender::start(uint16_t Port ,const char *IP)
 void Sender::read(uint16_t Port)
 {
 	auto readSockfd = creatUdpSocket();
-	if (!bindSocket(readSockfd, "0.0.0.0", SENDER_UDP_PORT))
+	if (!bindSocket(readSockfd, "0.0.0.0", Port))
 	{
 		printf("failed to create serverRtpSockfd socket.");
 		return;
@@ -55,8 +55,10 @@ void Sender::read(uint16_t Port)
 	char buf[1024] = { 0 };
 	sockaddr_in rtp_client;
 	socklen_t rtp_client_len = sizeof(rtp_client);
+	
 	while (1) {
 		//printf("waiting...\n");
+		
 		auto _size = recvfrom(readSockfd, buf, 1024, 0, reinterpret_cast<sockaddr*>(&rtp_client), &rtp_client_len);
 		if (_size < 0) {
 			//perror("recvfrom");
@@ -65,8 +67,10 @@ void Sender::read(uint16_t Port)
 			printf("client shutdown...\n");
 		}
 		else {
-			printf("get# %d\n", _size);
-			printf("buf# %s\n", buf);
+			auto  now_time = std::chrono::system_clock::now();
+			auto duration_time = std::chrono::duration_cast<std::chrono::milliseconds>(now_time.time_since_epoch());
+			std::cout << duration_time.count() << std::endl;
+			printf(" get# %d\n", _size);
 			memset(buf, 0, 1024);
 		}
 	}
