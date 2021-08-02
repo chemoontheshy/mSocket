@@ -38,7 +38,15 @@ public:
 	/// <param name="IP">目标的地址</param>
 	void start(uint16_t Port,const char *IP);
 
+	/// <summary>
+	/// 接受数据来自Port的UDP包
+	/// </summary>
+	/// <param name="Port">接受数据的端口</param>
 	void read(uint16_t Port);
+
+	float delaySend(uint16_t Port, const char* IP);
+
+	void delayReply(uint16_t Port);
 
 private:
 	/// <summary>
