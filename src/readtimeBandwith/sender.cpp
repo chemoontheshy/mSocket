@@ -117,6 +117,7 @@ float Sender::delaySend(uint16_t Port, const char* IP)
 		auto duration_time = std::chrono::duration_cast<std::chrono::milliseconds>(now_time.time_since_epoch()-last_time.time_since_epoch());
 		cout <<"delay: " << duration_time.count() << "ms" << endl;
 		memset(buf, 0, 1024);
+		//test
 	}
 	return 0.0f;
 }
