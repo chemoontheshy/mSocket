@@ -33,12 +33,11 @@ void Sender::start(uint16_t Port ,const char *IP)
 	sin.sin_port = htons(Port);
 	inet_pton(AF_INET, IP, &sin.sin_addr);
 	size_t num = 0;
-	char buf[100]{ 0 };
-	while (num < 120) {
+	char buf[1000]{ 0 };
+	while (true) {
 		auto data_len = sendto(sendSockfd, buf,100, 0, reinterpret_cast<sockaddr*>(&sin), sizeof(sin));
-		std::cout <<num<< " len: " << data_len << std::endl;
-		Sleep(1000);
-		num++;
+		//std::cout <<num<< " len: " << data_len << std::endl;
+		//num++;
 	}
 	sockFree();
 }
@@ -52,37 +51,43 @@ void Sender::read(uint16_t Port)
 		return;
 	}
 	//½ÓÊÜudp
-	char buf[1024] = { 0 };
+	char buf[1500] = { 0 };
 	sockaddr_in rtp_client;
 	socklen_t rtp_client_len = sizeof(rtp_client);
 	
-	std::chrono::milliseconds last_milliseconds;
-	size_t tol_time = 0;
 	size_t count_num = 0;
+	int64_t last_time = 0;
+	int64_t ten_time[10];
+	int64_t tol_time = 0;
+	int64_t tol_byte = 0;
 	while (1) {
-		//printf("waiting...\n");
 		
-		auto _size = recvfrom(readSockfd, buf, 1024, 0, reinterpret_cast<sockaddr*>(&rtp_client), &rtp_client_len);
+		auto _size = recvfrom(readSockfd, buf, 1500, 0, reinterpret_cast<sockaddr*>(&rtp_client), &rtp_client_len);
 		if (_size < 0) {
-			//perror("recvfrom");
+			perror("recvfrom");
 		}
 		else if (_size == 0) {
 			printf("client shutdown...\n");
 		}
 		else {
-			count_num++;
-			auto  now_time = std::chrono::system_clock::now();
-			auto duration_time = std::chrono::duration_cast<std::chrono::milliseconds>(now_time.time_since_epoch());
-			tol_time = tol_time + duration_time.count() - last_milliseconds.count() - 1000;
-			if (count_num == 10) {
-				count_num = 0;
-				std::cout << tol_time/10 << std::endl;
-				tol_time = 0;
+			if (last_time == 0) {
+				last_time = utils::getMilliseconds();
 			}
-			std::cout <<"te" << duration_time.count() - last_milliseconds.count() - 100 << std::endl;
-			last_milliseconds = duration_time;
-			//printf(" get# %d\n", _size);
-			memset(buf, 0, 1024);
+			else {
+				count_num++;
+				//t
+				tol_time = tol_time+utils::getMilliseconds() - last_time;
+				last_time = utils::getMilliseconds();
+				//b
+				tol_byte = tol_byte + _size;
+				if (count_num == 10) {
+					int64_t bw = (tol_byte * 8) / tol_time /1000;
+					cout << "bw: " << bw << "Mbps" << endl;
+				}
+			}
+
+
+			printf(" get# %d\n", _size);
 		}
 	}
 }
@@ -93,7 +98,7 @@ float Sender::delaySend(uint16_t Port, const char* IP)
 	if (!bindSocket(sendSockfd, "0.0.0.0", SENDER_UDP_PORT))
 	{
 		printf("failed to create serverRtpSockfd socket.");
-		return;
+		return 1.0;
 	}
 	//send
 	sockaddr_in sin;
