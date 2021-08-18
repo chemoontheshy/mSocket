@@ -57,12 +57,16 @@ void Sender::read(uint16_t Port)
 	
 	size_t count_num = 0;
 	int64_t last_time = 0;
-	int64_t ten_time[10];
+	int64_t mid_time = 0;
+	int64_t now_time = 0;
 	int64_t tol_time = 0;
-	int64_t tol_byte = 0;
+	double tol_byte = 0.f;
+	long double tol_bw = 0.f;
+	size_t count_bt = 0;
 	while (1) {
-		
+		//mid_time = utils::getUsec();
 		auto _size = recvfrom(readSockfd, buf, 1500, 0, reinterpret_cast<sockaddr*>(&rtp_client), &rtp_client_len);
+		now_time = utils::getUsec();
 		if (_size < 0) {
 			perror("recvfrom");
 		}
@@ -71,23 +75,25 @@ void Sender::read(uint16_t Port)
 		}
 		else {
 			if (last_time == 0) {
-				last_time = utils::getMilliseconds();
+				last_time = utils::getUsec();
+	
 			}
 			else {
-				count_num++;
-				//t
-				tol_time = tol_time+utils::getMilliseconds() - last_time;
-				last_time = utils::getMilliseconds();
-				//b
 				tol_byte = tol_byte + _size;
-				if (count_num == 10) {
-					int64_t bw = (tol_byte * 8) / tol_time /1000;
+				count_num++;
+				if (count_num==10) {
+					//double bw = (tol_byte * 8 * 1000 * 1000) / ((now_time - last_time) * 1000 * 1000);
+					double bw = (tol_byte * 8 ) / (now_time - last_time);
+					tol_bw = tol_bw + bw;
+					cout << "B:" << tol_byte <<" T: "<<now_time-last_time << endl;
 					cout << "bw: " << bw << "Mbps" << endl;
+					last_time = 0;
+					count_num = 0;
+					tol_byte = 0;
+					count_bt++;
 				}
 			}
 
-
-			printf(" get# %d\n", _size);
 		}
 	}
 }
@@ -106,25 +112,15 @@ float Sender::delaySend(uint16_t Port, const char* IP)
 	sin.sin_port = htons(Port);
 	inet_pton(AF_INET, IP, &sin.sin_addr);
 	size_t num = 0;
-	char buf[100]{ 0 };
+	char buf[1024]{ 0 };
 	socklen_t sin_len = sizeof(sin);
+	
+	//time
+	int64_t time_send = 0;
 	auto data_len = sendto(sendSockfd, buf, 100, 0, reinterpret_cast<sockaddr*>(&sin), sizeof(sin));
-	auto  now_time = std::chrono::system_clock::now();
+	time_send = utils::getUsec();
 	auto _size = recvfrom(sendSockfd, buf, 1024, 0, reinterpret_cast<sockaddr*>(&sin), &sin_len);
-	if (_size < 0) {
-		//perror("recvfrom");
-	}
-	else if (_size == 0) {
-		printf("client shutdown...\n");
-	}
-	else {
-		auto  last_time = std::chrono::system_clock::now();
-		auto duration_time = std::chrono::duration_cast<std::chrono::milliseconds>(now_time.time_since_epoch()-last_time.time_since_epoch());
-		cout <<"delay: " << duration_time.count() << "ms" << endl;
-		memset(buf, 0, 1024);
-		//test
-	}
-	return 0.0f;
+	return utils::getUsec() - time_send;
 }
 
 void Sender::delayReply(uint16_t Port)
@@ -140,34 +136,24 @@ void Sender::delayReply(uint16_t Port)
 	sockaddr_in rtp_client;
 	socklen_t rtp_client_len = sizeof(rtp_client);
 
-	std::chrono::milliseconds last_milliseconds;
-	size_t tol_time = 0;
-	size_t count_num = 0;
+	//send
+	auto sendSockfd = creatUdpSocket();
+	if (!bindSocket(sendSockfd, "0.0.0.0", SENDER_UDP_PORT))
+	{
+		printf("failed to create serverRtpSockfd socket.");
+	}
+	//send
+	sockaddr_in sin;
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(Port);
+	inet_pton(AF_INET, "192.168.3.73", &sin.sin_addr);
+	size_t num = 0;
+	char buf[1024]{ 0 };
+	socklen_t sin_len = sizeof(sin);
 	while (1) {
-		//printf("waiting...\n");
-
 		auto _size = recvfrom(readSockfd, buf, 1024, 0, reinterpret_cast<sockaddr*>(&rtp_client), &rtp_client_len);
-		if (_size < 0) {
-			//perror("recvfrom");
-		}
-		else if (_size == 0) {
-			printf("client shutdown...\n");
-		}
-		else {
-			count_num++;
-			auto  now_time = std::chrono::system_clock::now();
-			auto duration_time = std::chrono::duration_cast<std::chrono::milliseconds>(now_time.time_since_epoch());
-			tol_time = tol_time + duration_time.count() - last_milliseconds.count() - 1000;
-			if (count_num == 10) {
-				count_num = 0;
-				std::cout << tol_time / 10 << std::endl;
-				tol_time = 0;
-			}
-			std::cout << "te" << duration_time.count() - last_milliseconds.count() - 100 << std::endl;
-			last_milliseconds = duration_time;
-			//printf(" get# %d\n", _size);
-			memset(buf, 0, 1024);
-		}
+		auto data_len = sendto(sendSockfd, buf, 100, 0, reinterpret_cast<sockaddr*>(&sin), sizeof(sin));
+		
 	}
 }
 

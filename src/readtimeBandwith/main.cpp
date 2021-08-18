@@ -2,5 +2,7 @@
 #include "utils.h"
 using namespace std;
 int main() {
-	cout << utils::getMilliseconds() << endl;
+	Sender sender;
+	sender.read(5666);
+	//cout << utils::getUsec << endl;
 } 
