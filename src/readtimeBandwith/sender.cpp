@@ -152,7 +152,7 @@ void Sender::delayReply(uint16_t Port)
 	socklen_t sin_len = sizeof(sin);
 	while (1) {
 		auto _size = recvfrom(readSockfd, buf, 1024, 0, reinterpret_cast<sockaddr*>(&rtp_client), &rtp_client_len);
-		auto data_len = sendto(sendSockfd, buf, 100, 0, reinterpret_cast<sockaddr*>(&sin), sizeof(sin));
+		auto data_len = sendto(sendSockfd, _size, 100, 0, reinterpret_cast<sockaddr*>(&sin), sizeof(sin));
 		
 	}
 }
