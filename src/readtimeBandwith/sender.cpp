@@ -32,12 +32,19 @@ void Sender::start(uint16_t Port ,const char *IP)
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(Port);
 	inet_pton(AF_INET, IP, &sin.sin_addr);
+	size_t send_byte = 1 * 1000 * 1000;
 	size_t num = 0;
 	char buf[1000]{ 0 };
 	while (true) {
-		auto data_len = sendto(sendSockfd, buf,100, 0, reinterpret_cast<sockaddr*>(&sin), sizeof(sin));
+		send_byte = send_byte - 1000;
+		if (send_byte == 0) {
+			buf[0] = 1;
+			send_byte == 1 * 1000 * 1000;
+		}
+		auto data_len = sendto(sendSockfd, buf,1000, 0, reinterpret_cast<sockaddr*>(&sin), sizeof(sin));
 		//std::cout <<num<< " len: " << data_len << std::endl;
-		//num++;
+		buf[0] = 0;
+		num++;
 	}
 	sockFree();
 }
@@ -66,6 +73,10 @@ void Sender::read(uint16_t Port)
 	while (1) {
 		//mid_time = utils::getUsec();
 		auto _size = recvfrom(readSockfd, buf, 1500, 0, reinterpret_cast<sockaddr*>(&rtp_client), &rtp_client_len);
+		if (last_time == 0) {
+			last_time = utils::getUsec();
+			continue;
+		}
 		now_time = utils::getUsec();
 		if (_size < 0) {
 			perror("recvfrom");
@@ -74,24 +85,17 @@ void Sender::read(uint16_t Port)
 			printf("client shutdown...\n");
 		}
 		else {
-			if (last_time == 0) {
-				last_time = utils::getUsec();
-	
-			}
-			else {
-				tol_byte = tol_byte + _size;
-				count_num++;
-				if (count_num==10) {
-					//double bw = (tol_byte * 8 * 1000 * 1000) / ((now_time - last_time) * 1000 * 1000);
-					double bw = (tol_byte * 8 ) / (now_time - last_time);
-					tol_bw = tol_bw + bw;
-					cout << "B:" << tol_byte <<" T: "<<now_time-last_time << endl;
-					cout << "bw: " << bw << "Mbps" << endl;
-					last_time = 0;
-					count_num = 0;
-					tol_byte = 0;
-					count_bt++;
-				}
+			tol_byte = tol_byte + _size;
+			count_num++;
+			//cout << utils::getUsec()<< endl;
+			//std::cout << "bw: " << (_size * 8) / static_cast <float>(now_time - last_time) << "Mbps" << std::endl;
+			if (count_num == 10) {
+				double bw = (tol_byte * 8) / (now_time - last_time);
+				cout << "B:" << tol_byte << " T: " << now_time - last_time << endl;
+				cout << "bw: " << bw << "Mbps" << endl;
+				last_time = 0;
+				count_num = 0;
+				tol_byte = 0;
 			}
 
 		}
@@ -100,6 +104,17 @@ void Sender::read(uint16_t Port)
 
 float Sender::delaySend(uint16_t Port, const char* IP)
 {
+
+	auto readSockfd = creatUdpSocket();
+	if (!bindSocket(readSockfd, "0.0.0.0", Port))
+	{
+		printf("failed to create serverRtpSockfd socket.");
+		return 0.f;
+	}
+	//½ÓÊÜudp
+	char buf[1024] = { 0 };
+	sockaddr_in rtp_client;
+	socklen_t rtp_client_len = sizeof(rtp_client);
 	auto sendSockfd = creatUdpSocket();
 	if (!bindSocket(sendSockfd, "0.0.0.0", SENDER_UDP_PORT))
 	{
@@ -112,15 +127,22 @@ float Sender::delaySend(uint16_t Port, const char* IP)
 	sin.sin_port = htons(Port);
 	inet_pton(AF_INET, IP, &sin.sin_addr);
 	size_t num = 0;
-	char buf[1024]{ 0 };
 	socklen_t sin_len = sizeof(sin);
 	
 	//time
-	int64_t time_send = 0;
-	auto data_len = sendto(sendSockfd, buf, 100, 0, reinterpret_cast<sockaddr*>(&sin), sizeof(sin));
-	time_send = utils::getUsec();
-	auto _size = recvfrom(sendSockfd, buf, 1024, 0, reinterpret_cast<sockaddr*>(&sin), &sin_len);
-	return utils::getUsec() - time_send;
+	int64_t time_f = 0;
+	int64_t time_b = 0;
+	while (1) {
+		//time_f = utils::getUsec();
+		auto data_len = sendto(sendSockfd, buf, 8, 0, reinterpret_cast<sockaddr*>(&sin), sizeof(sin));
+		time_b = utils::getUsec();
+		auto _size = recvfrom(readSockfd, buf, 8, 0, reinterpret_cast<sockaddr*>(&rtp_client), &rtp_client_len);
+		float rtt = static_cast<float>(utils::getUsec() - time_b) / 1000;
+		//cout << "¶¶¶¯:" << static_cast<float>(time_b - time_f) / 1000 << "ms" << endl;
+		cout << "rtt:" << rtt << "ms" << endl;
+	}
+	
+	return 0.f;
 }
 
 void Sender::delayReply(uint16_t Port)
@@ -148,7 +170,6 @@ void Sender::delayReply(uint16_t Port)
 	sin.sin_port = htons(Port);
 	inet_pton(AF_INET, "192.168.3.73", &sin.sin_addr);
 	size_t num = 0;
-	char buf[1024]{ 0 };
 	socklen_t sin_len = sizeof(sin);
 	while (1) {
 		auto _size = recvfrom(readSockfd, buf, 1024, 0, reinterpret_cast<sockaddr*>(&rtp_client), &rtp_client_len);

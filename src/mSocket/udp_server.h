@@ -3,6 +3,7 @@
 #pragma once
 #include<iostream>
 #include <stdio.h>
+#include<chrono>
 #include <winsock2.h>
 #include <WS2tcpip.h>
 
