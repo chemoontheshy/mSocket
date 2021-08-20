@@ -11,5 +11,7 @@ int64_t utils::getMilliseconds()
 
 int64_t utils::getUsec()
 {
-	return std::chrono::system_clock::now().time_since_epoch().count();
+	return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
+
+

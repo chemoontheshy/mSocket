@@ -2,6 +2,7 @@
 #define  UTILS_H
 #include <sys/timeb.h>
 #include <iostream>
+#include <fstream>
 #include <ctime>
 #include<chrono>
 
