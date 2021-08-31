@@ -36,7 +36,7 @@ void SUDP::start()
 	auto send_sock = socket(AF_INET, SOCK_DGRAM, 0);
 	sockaddr_in sin;
 	sin.sin_family = AF_INET;
-	sin.sin_port = htons(8888);
+	sin.sin_port = htons(6000);
 	sin.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
 	int len = sizeof(sin);
 	char rBuf[1500] = {0};
@@ -44,24 +44,24 @@ void SUDP::start()
 	int64_t now_time = -1;
 	while (1) {
 		//printf("waiting...\n");
-		auto _size = recvfrom(udp_sock, rBuf, 1500, 0, reinterpret_cast<sockaddr*>(&client), &client_len);
-		last_time = now_time;
-		now_time = std::chrono::system_clock::now().time_since_epoch().count();
-		if (_size < 0) {
-			perror("recvfrom");
-		}
-		else if (_size == 0) {
-			printf("client shutdown...\n");
-		}
-		else {
+		auto cout = sendto(send_sock, rBuf, 100, 0, (sockaddr*)&sin, len);
+		printf("get# %d\n", cout);
+		//auto _size = recvfrom(udp_sock, rBuf, 1500, 0, reinterpret_cast<sockaddr*>(&client), &client_len);
+		//if (_size < 0) {
+		//	perror("recvfrom");
+		//}
+		//else if (_size == 0) {
+		//	printf("client shutdown...\n");
+		//}
+		//else {
 	
 			//std::cout <<"bw: "<< static_cast<float>(now_time-last_time)/1000<<"ms" << std::endl;
-			std::cout << "bw: " << (_size * 8) / static_cast <float>(now_time - last_time) << "Mbps" << std::endl;
-			//printf("get# %d\n", _size);
+			//std::cout << "bw: " << (_size * 8) / static_cast <float>(now_time - last_time) << "Mbps" << std::endl;
+		//	printf("get# %d\n", _size);
 			//rBuf[_size] = '\0';
 			//auto cout= sendto(send_sock, rBuf, _size, 0, (sockaddr*)&sin, len);
 			//printf("get# %d\n", cout );
-		}
+		//}
 	}
 }
 

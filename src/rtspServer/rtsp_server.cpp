@@ -256,7 +256,7 @@ void RTSP::thread_do(SOCKET clientRtpSockfd, SOCKET serverRtpSockfd,ULONG ip_S_a
 	sin.sin_port = htons(serverRtpPort);
 	//sin.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
 	//ÐÂº¯Êý
-	//inet_pton(AF_INET, "127.0.0.1", &sin.sin_addr);
+	inet_pton(AF_INET, "127.0.0.1", &sin.sin_addr);
 	sin.sin_addr.S_un.S_addr = ip_S_adrr;
 	int len = sizeof(sin);
 	while (1) {
